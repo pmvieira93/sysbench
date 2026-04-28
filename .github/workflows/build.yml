@@ -1,0 +1,139 @@
+name: Build & Release (Nuitka)
+
+on:
+  push:
+    tags:
+      - "v*"          # Dispara em: git tag v1.0 && git push --tags
+
+permissions:
+  contents: write    # Necessário para criar o GitHub Release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: sysbench-linux
+            binary_path: sysbench.bin
+
+          - os: windows-latest
+            artifact_name: sysbench-windows
+            binary_path: sysbench.exe
+
+          - os: macos-latest
+            artifact_name: sysbench-macos
+            binary_path: sysbench.bin
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Linux: dependências de sistema necessárias para o Nuitka
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf ccache
+
+      # macOS: garante compilador C disponível
+      - name: Install system deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ccache
+
+      # Windows: ccache via choco
+      - name: Install system deps (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ccache --no-progress
+
+      - name: Install Python dependencies
+        run: pip install psutil rich nuitka ordered-set zstandard
+
+      # Cache do ccache para acelerar rebuilds (~3x mais rápido)
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ matrix.os }}-${{ hashFiles('benchmark.py') }}
+          restore-keys: ccache-${{ matrix.os }}-
+
+      # ── BUILD ──────────────────────────────────────────────────────────────
+      - name: Build (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          python -m nuitka \
+            --onefile \
+            --output-filename=sysbench.bin \
+            --assume-yes-for-downloads \
+            --nofollow-import-to=tkinter \
+            benchmark.py
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          python -m nuitka `
+            --onefile `
+            --output-filename=sysbench.exe `
+            --assume-yes-for-downloads `
+            --nofollow-import-to=tkinter `
+            --windows-console-mode=attach `
+            benchmark.py
+
+      # ── UPLOAD ARTIFACT ────────────────────────────────────────────────────
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.binary_path }}
+          retention-days: 7
+
+  # ── RELEASE ────────────────────────────────────────────────────────────────
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      # Renomeia para nomes descritivos no Release
+      - name: Rename binaries
+        run: |
+          mv dist/sysbench-linux/sysbench.bin   dist/sysbench-linux-amd64
+          mv dist/sysbench-windows/sysbench.exe dist/sysbench-windows-amd64.exe
+          mv dist/sysbench-macos/sysbench.bin   dist/sysbench-macos-amd64
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "SysBench ${{ github.ref_name }}"
+          body: |
+            ## SysBench ${{ github.ref_name }}
+
+            Binários compilados com Nuitka para as 3 plataformas.
+
+            | Plataforma | Ficheiro |
+            |---|---|
+            | Linux (x86_64) | `sysbench-linux-amd64` |
+            | Windows (x86_64) | `sysbench-windows-amd64.exe` |
+            | macOS (x86_64) | `sysbench-macos-amd64` |
+
+            **Linux / macOS:** `chmod +x sysbench-* && ./sysbench-*`
+            **Windows:** executar directamente o `.exe`
+          files: |
+            dist/sysbench-linux-amd64
+            dist/sysbench-windows-amd64.exe
+            dist/sysbench-macos-amd64
+          draft: false
+          prerelease: false
