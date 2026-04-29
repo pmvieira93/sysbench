@@ -1,0 +1,97 @@
+{
+  "generated_at": "2026-04-28 15:24:23",
+  "system": {
+    "os_name": "Linux",
+    "os_version": "#202601231045~1769703228~24.04~cb87b5b SMP PREEMPT_DYNAMIC Thu J",
+    "os_release": "6.18.7-76061807-generic",
+    "hostname": "pop-os",
+    "arch": "x86_64",
+    "python": "3.12.3",
+    "timestamp": "2026-04-28 15:24:23",
+    "distro": "Pop!_OS 24.04",
+    "cpu_name": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "cpu_physical": 4,
+    "cpu_logical": 8,
+    "cpu_freq_max": 3400.0,
+    "cpu_freq_cur": 3088.9415,
+    "ram_total": 16517627904,
+    "ram_available": 11073417216,
+    "ram_used": 3278901248,
+    "ram_pct": 33.0,
+    "swap_total": 25106567168,
+    "swap_used": 0,
+    "disks": [
+      {
+        "device": "/dev/nvme0n1p6",
+        "mountpoint": "/",
+        "fstype": "ext4",
+        "total": 517783556096,
+        "used": 15560810496,
+        "free": 475845607424,
+        "pct": 3.2
+      },
+      {
+        "device": "/dev/nvme0n1p5",
+        "mountpoint": "/boot/efi",
+        "fstype": "vfat",
+        "total": 1071611904,
+        "used": 185503744,
+        "free": 886108160,
+        "pct": 17.3
+      }
+    ],
+    "net_ifaces": [
+      {
+        "iface": "lo",
+        "ip": "127.0.0.1"
+      },
+      {
+        "iface": "wlp3s0",
+        "ip": "192.168.1.79"
+      }
+    ],
+    "gpu": [
+      {
+        "name": "Intel Corporation UHD Graphics 620 (rev 07)",
+        "vram": "?",
+        "driver": "?"
+      }
+    ]
+  },
+  "results": {
+    "cpu_single": {
+      "ops_per_sec": 877.3280082182633,
+      "elapsed": 5.000410290000218,
+      "iterations": 4387
+    },
+    "cpu_multi": {
+      "total_ops_per_sec": 2750.7962244098,
+      "cores_used": 8,
+      "elapsed": 5.025410936999833
+    },
+    "memory": {
+      "seq_write_bps": 1453682426.6601424,
+      "seq_read_bps": 28625518473.876404,
+      "latency_us": 0.07161100002122112
+    },
+    "disk": {
+      "seq_write_bps": 358252313.0318255,
+      "seq_read_bps": 9090344839.5079,
+      "rand_read_iops": 279973.2347542186
+    },
+    "network": {
+      "avg_latency_ms": 75.68991366679256,
+      "min_latency_ms": 66.49699800072995,
+      "reachable": true,
+      "localhost_bps": 1057981755.4037315
+    }
+  },
+  "scores": {
+    "cpu_single": 100,
+    "cpu_multi": 100,
+    "memory": 29.1,
+    "disk": 71.7,
+    "network": 64.7,
+    "overall": 76.6
+  }
+}

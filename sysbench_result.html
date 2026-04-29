@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SysBench Report — 2026-04-28 15:24:23</title>
+<style>
+  :root {
+    --bg:#0f0f13; --surface:#18181f; --border:#2a2a35;
+    --text:#e2e2e8; --muted:#6b6b80; --accent:#38bdf8;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+        font-size:14px;line-height:1.6;padding:32px 16px}
+  h1{font-size:2rem;font-weight:800;color:var(--accent);letter-spacing:-0.5px}
+  h2{font-size:1rem;font-weight:700;color:var(--accent);text-transform:uppercase;
+      letter-spacing:1px;border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:14px}
+  .wrap{max-width:960px;margin:0 auto}
+  .card{background:var(--surface);border:1px solid var(--border);
+         border-radius:12px;padding:24px;margin-bottom:24px}
+  .meta{color:var(--muted);font-size:12px;margin-top:4px}
+  .gauges{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-around}
+  .gauge-cell{text-align:center}
+  .gauge-label{font-size:11px;color:var(--muted);text-transform:uppercase;
+                letter-spacing:0.5px;margin-bottom:4px}
+  .overall{display:flex;align-items:center;gap:32px;margin-bottom:24px}
+  .overall-score{font-size:4rem;font-weight:900;line-height:1}
+  .kv{display:grid;grid-template-columns:180px 1fr;gap:4px 16px}
+  .kv-key{color:var(--muted)}
+  .kv-val{font-weight:500}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px}
+  .section-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:0.5px;margin-bottom:8px}
+  .bench-section{margin-bottom:20px}
+  .bench-section h3{font-size:.85rem;font-weight:700;color:var(--muted);
+                     text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+  .bench-row{display:grid;grid-template-columns:220px 150px 1fr;align-items:center;
+              gap:12px;padding:6px 0;border-bottom:1px solid var(--border)}
+  .bench-row:last-child{border-bottom:none}
+  .bench-value{font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+  .bar-wrap{display:inline-block;width:120px;height:8px;background:#2a2a35;
+             border-radius:4px;vertical-align:middle}
+  .bar-fill{height:8px;border-radius:4px}
+  .bar-val{font-size:12px;font-weight:700;margin-left:8px}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;
+      letter-spacing:0.5px;padding:6px 8px;border-bottom:1px solid var(--border)}
+  td{padding:6px 8px;border-bottom:1px solid #1f1f28}
+  tr:last-child td{border-bottom:none}
+  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:32px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <h1>&#x26A1; SysBench Report</h1>
+    <p class="meta">Generated on 2026-04-28 15:24:23 &nbsp;&middot;&nbsp; Pop!_OS 24.04 &nbsp;&middot;&nbsp; pop-os</p>
+  </div>
+
+  <div class="card">
+    <h2>Overall Score</h2>
+    <div class="overall">
+      <div class="overall-score" style="color:#eab308">76.6</div>
+      <div>
+        <div style="font-size:1.1rem;font-weight:600;color:#eab308">Good</div>
+        <div class="meta">Weighted: CPU 50% &middot; Memory 20% &middot; Disk 20% &middot; Network 10%</div>
+      </div>
+    </div>
+    <div class="gauges"><div class="gauge-cell"><div class="gauge-label">CPU Single</div><svg width="120" height="84" viewBox="0 0 120 84">
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#22c55e" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="144.5 144.5"/>
+  <text x="60" y="74" text-anchor="middle"
+        font-size="18" font-weight="700" fill="#22c55e">100</text>
+  <text x="60" y="88" text-anchor="middle"
+        font-size="9" fill="#888">Excellent</text>
+</svg></div><div class="gauge-cell"><div class="gauge-label">CPU Multi</div><svg width="120" height="84" viewBox="0 0 120 84">
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#22c55e" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="144.5 144.5"/>
+  <text x="60" y="74" text-anchor="middle"
+        font-size="18" font-weight="700" fill="#22c55e">100</text>
+  <text x="60" y="88" text-anchor="middle"
+        font-size="9" fill="#888">Excellent</text>
+</svg></div><div class="gauge-cell"><div class="gauge-label">Memory</div><svg width="120" height="84" viewBox="0 0 120 84">
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#ef4444" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="42.1 247.0"/>
+  <text x="60" y="74" text-anchor="middle"
+        font-size="18" font-weight="700" fill="#ef4444">29</text>
+  <text x="60" y="88" text-anchor="middle"
+        font-size="9" fill="#888">Needs Improvement</text>
+</svg></div><div class="gauge-cell"><div class="gauge-label">Disk</div><svg width="120" height="84" viewBox="0 0 120 84">
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#eab308" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="103.6 185.4"/>
+  <text x="60" y="74" text-anchor="middle"
+        font-size="18" font-weight="700" fill="#eab308">72</text>
+  <text x="60" y="88" text-anchor="middle"
+        font-size="9" fill="#888">Good</text>
+</svg></div><div class="gauge-cell"><div class="gauge-label">Network</div><svg width="120" height="84" viewBox="0 0 120 84">
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14,70 A46,46 0 0,1 106,70"
+        fill="none" stroke="#f97316" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="93.5 195.5"/>
+  <text x="60" y="74" text-anchor="middle"
+        font-size="18" font-weight="700" fill="#f97316">65</text>
+  <text x="60" y="88" text-anchor="middle"
+        font-size="9" fill="#888">Fair</text>
+</svg></div></div>
+  </div>
+
+  <div class="card">
+    <h2>System Information</h2>
+    <div class="two-col">
+      <div>
+        <div class="section-label">OS</div>
+        <div class="kv">
+          <span class="kv-key">OS</span>        <span class="kv-val">Pop!_OS 24.04</span>
+          <span class="kv-key">Kernel</span>    <span class="kv-val">6.18.7-76061807-generic</span>
+          <span class="kv-key">Arch</span>      <span class="kv-val">x86_64</span>
+          <span class="kv-key">Hostname</span>  <span class="kv-val">pop-os</span>
+          <span class="kv-key">Python</span>    <span class="kv-val">3.12.3</span>
+        </div>
+      </div>
+      <div>
+        <div class="section-label">CPU</div>
+        <div class="kv">
+          <span class="kv-key">Model</span>     <span class="kv-val">Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz</span>
+          <span class="kv-key">Cores (P/L)</span><span class="kv-val">4 / 8</span>
+          <span class="kv-key">Max Freq</span>  <span class="kv-val">3400 MHz</span>
+          <span class="kv-key">Cur Freq</span>  <span class="kv-val">3089 MHz</span>
+        </div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="section-label">Memory</div>
+        <div class="kv">
+          <span class="kv-key">Total RAM</span>   <span class="kv-val">15.38 GB</span>
+          <span class="kv-key">Used</span>         <span class="kv-val">3.05 GB (33.0%)</span>
+          <span class="kv-key">Available</span>   <span class="kv-val">10.31 GB</span>
+          <span class="kv-key">Swap Total</span>  <span class="kv-val">23.38 GB</span>
+          <span class="kv-key">Swap Used</span>   <span class="kv-val">0.00 B</span>
+        </div>
+      </div>
+      <div>
+        <div class="section-label">GPU</div>
+        <table><thead><tr><th>Name</th><th>VRAM</th><th>Driver</th></tr></thead>
+        <tbody><tr><td>Intel Corporation UHD Graphics 620 (rev 07)</td><td>?</td><td>?</td></tr></tbody></table>
+      </div>
+    </div>
+    <div class="section-label">Storage</div>
+    <table><thead><tr><th>Device</th><th>Mount</th><th>FS</th><th>Total</th><th>Used</th><th>Free</th><th>Usage</th></tr></thead>
+    <tbody><tr><td>/dev/nvme0n1p6</td><td>/</td><td>ext4</td><td>482.22 GB</td><td>14.49 GB</td><td>443.17 GB</td><td><span style='color:#22c55e;font-weight:600'>3.2%</span></td></tr><tr><td>/dev/nvme0n1p5</td><td>/boot/efi</td><td>vfat</td><td>1021.97 MB</td><td>176.91 MB</td><td>845.06 MB</td><td><span style='color:#22c55e;font-weight:600'>17.3%</span></td></tr></tbody></table>
+    <div style="margin-top:20px">
+      <div class="section-label">Network Interfaces</div>
+      <table><thead><tr><th>Interface</th><th>IP Address</th></tr></thead>
+      <tbody><tr><td>lo</td><td>127.0.0.1</td></tr><tr><td>wlp3s0</td><td>192.168.1.79</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Benchmark Results</h2>
+    <div class="bench-section">
+      <h3>CPU</h3>
+      <div class="bench-row">
+        <span>Single-Core ops/sec</span>
+        <span class="bench-value">877.3</span>
+        <span><div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#22c55e"></div></div><span class="bar-val" style="color:#22c55e">100.0</span></span>
+      </div>
+      <div class="bench-row">
+        <span>Multi-Core ops/sec (8 threads)</span>
+        <span class="bench-value">2,750.8</span>
+        <span><div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#22c55e"></div></div><span class="bar-val" style="color:#22c55e">100.0</span></span>
+      </div>
+    </div>
+    <div class="bench-section">
+      <h3>Memory Bandwidth</h3>
+      <div class="bench-row">
+        <span>Sequential Write</span>
+        <span class="bench-value">1.35 GB/s</span>
+        <span><div class="bar-wrap"><div class="bar-fill" style="width:29.1%;background:#ef4444"></div></div><span class="bar-val" style="color:#ef4444">29.1</span></span>
+      </div>
+      <div class="bench-row">
+        <span>Sequential Read</span>
+        <span class="bench-value">26.66 GB/s</span><span></span>
+      </div>
+      <div class="bench-row">
+        <span>Random Access Latency</span>
+        <span class="bench-value">0.072 &micro;s</span><span></span>
+      </div>
+    </div>
+    <div class="bench-section">
+      <h3>Disk I/O</h3>
+      <div class="bench-row">
+        <span>Sequential Write</span>
+        <span class="bench-value">341.66 MB/s</span>
+        <span><div class="bar-wrap"><div class="bar-fill" style="width:71.7%;background:#eab308"></div></div><span class="bar-val" style="color:#eab308">71.7</span></span>
+      </div>
+      <div class="bench-row">
+        <span>Sequential Read</span>
+        <span class="bench-value">8.47 GB/s</span><span></span>
+      </div>
+      <div class="bench-row">
+        <span>Random 4K Read IOPS</span>
+        <span class="bench-value">279973 IOPS</span><span></span>
+      </div>
+    </div>
+    <div class="bench-section">
+      <h3>Network</h3>
+      <div class="bench-row">
+        <span>External Latency</span>
+        <span class="bench-value">75.7 ms avg / 66.5 ms min</span>
+        <span><div class="bar-wrap"><div class="bar-fill" style="width:64.7%;background:#f97316"></div></div><span class="bar-val" style="color:#f97316">64.7</span></span>
+      </div>
+      <div class="bench-row">
+        <span>Localhost Throughput</span>
+        <span class="bench-value">1008.97 MB/s</span><span></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer>SysBench &middot; 2026-04-28 15:24:23</footer>
+</body>
+</html>
