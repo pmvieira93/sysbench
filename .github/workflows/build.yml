@@ -6,98 +6,159 @@ on:
       - "v*"          # Dispara em: git tag v1.0 && git push --tags
 
 permissions:
-  contents: write    # Necessário para criar o GitHub Release
+  contents: write
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: sysbench-linux
-            binary_path: sysbench.bin
 
-          - os: windows-latest
-            artifact_name: sysbench-windows
-            binary_path: sysbench.exe
-
-          - os: macos-latest
-            artifact_name: sysbench-macos
-            binary_path: sysbench.bin
-
-    runs-on: ${{ matrix.os }}
+  # ════════════════════════════════════════════════════════════════════════════
+  # LINUX — corre dentro de um container manylinux (glibc 2.17, ~2012)
+  # Garante compatibilidade com praticamente qualquer Linux x86_64 moderno:
+  # Ubuntu 16.04+, Debian 9+, RHEL/CentOS 7+, Fedora 26+, Pop!_OS, etc.
+  # O binário resultante não precisa de Python instalado no sistema destino.
+  # ════════════════════════════════════════════════════════════════════════════
+  build-linux:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64   # glibc 2.17
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      # O container já tem Python 3.11 em /opt/python/cp311-cp311/bin/
+      - name: Setup Python path
+        run: echo "/opt/python/cp311-cp311/bin" >> $GITHUB_PATH
 
-      # Linux: dependências de sistema necessárias para o Nuitka
-      - name: Install system deps (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y patchelf ccache
+      - name: Install system deps
+        run: yum install -y patchelf ccache
 
-      # macOS: garante compilador C disponível
-      - name: Install system deps (macOS)
-        if: runner.os == 'macOS'
-        run: brew install ccache
+      - name: Install Python deps
+        run: pip3.11 install psutil rich nuitka ordered-set zstandard
 
-      # Windows: ccache via choco
-      - name: Install system deps (Windows)
-        if: runner.os == 'Windows'
-        run: choco install ccache --no-progress
-
-      - name: Install Python dependencies
-        run: pip install psutil rich nuitka ordered-set zstandard
-
-      # Cache do ccache para acelerar rebuilds (~3x mais rápido)
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
-          key: ccache-${{ matrix.os }}-${{ hashFiles('benchmark.py') }}
-          restore-keys: ccache-${{ matrix.os }}-
+          key: ccache-linux-manylinux-${{ hashFiles('benchmark.py') }}
+          restore-keys: ccache-linux-manylinux-
 
-      # ── BUILD ──────────────────────────────────────────────────────────────
-      - name: Build (Linux / macOS)
-        if: runner.os != 'Windows'
+      - name: Build
         run: |
-          python -m nuitka \
+          python3.11 -m nuitka \
             --onefile \
             --output-filename=sysbench.bin \
             --assume-yes-for-downloads \
+            --include-package=rich \
+            --include-package-data=rich \
+            --include-package=psutil \
             --nofollow-import-to=tkinter \
             benchmark.py
 
-      - name: Build (Windows)
-        if: runner.os == 'Windows'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysbench-linux
+          path: sysbench.bin
+          retention-days: 7
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # WINDOWS — o Nuitka embute o Python runtime + MSVC runtime no .exe
+  # Corre em Windows 10+ sem precisar de Python instalado.
+  # ════════════════════════════════════════════════════════════════════════════
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps
+        run: choco install ccache --no-progress
+
+      - name: Install Python deps
+        run: pip install psutil rich nuitka ordered-set zstandard
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-windows-${{ hashFiles('benchmark.py') }}
+          restore-keys: ccache-windows-
+
+      - name: Build
         run: |
           python -m nuitka `
             --onefile `
             --output-filename=sysbench.exe `
             --assume-yes-for-downloads `
+            --include-package=rich `
+            --include-package-data=rich `
+            --include-package=psutil `
             --nofollow-import-to=tkinter `
             --windows-console-mode=attach `
             benchmark.py
 
-      # ── UPLOAD ARTIFACT ────────────────────────────────────────────────────
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.binary_path }}
+          name: sysbench-windows
+          path: sysbench.exe
           retention-days: 7
 
-  # ── RELEASE ────────────────────────────────────────────────────────────────
+  # ════════════════════════════════════════════════════════════════════════════
+  # MACOS — compilado para x86_64 (corre em Apple Silicon via Rosetta)
+  # Corre em macOS 11+ sem precisar de Python instalado.
+  # ════════════════════════════════════════════════════════════════════════════
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps
+        run: brew install ccache
+
+      - name: Install Python deps
+        run: pip install psutil rich nuitka ordered-set zstandard
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-macos-${{ hashFiles('benchmark.py') }}
+          restore-keys: ccache-macos-
+
+      - name: Build
+        run: |
+          python -m nuitka \
+            --onefile \
+            --output-filename=sysbench.bin \
+            --assume-yes-for-downloads \
+            --include-package=rich \
+            --include-package-data=rich \
+            --include-package=psutil \
+            --nofollow-import-to=tkinter \
+            --macos-target-arch=x86_64 \
+            benchmark.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysbench-macos
+          path: sysbench.bin
+          retention-days: 7
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # RELEASE — agrega os 3 binários e publica no GitHub Releases
+  # ════════════════════════════════════════════════════════════════════════════
   release:
-    needs: build
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
 
@@ -107,12 +168,12 @@ jobs:
         with:
           path: dist/
 
-      # Renomeia para nomes descritivos no Release
-      - name: Rename binaries
+      - name: Rename and mark executable
         run: |
-          mv dist/sysbench-linux/sysbench.bin   dist/sysbench-linux-amd64
-          mv dist/sysbench-windows/sysbench.exe dist/sysbench-windows-amd64.exe
-          mv dist/sysbench-macos/sysbench.bin   dist/sysbench-macos-amd64
+          mv dist/sysbench-linux/sysbench.bin    dist/sysbench-linux-amd64
+          mv dist/sysbench-windows/sysbench.exe  dist/sysbench-windows-amd64.exe
+          mv dist/sysbench-macos/sysbench.bin    dist/sysbench-macos-amd64
+          chmod +x dist/sysbench-linux-amd64 dist/sysbench-macos-amd64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -121,15 +182,19 @@ jobs:
           body: |
             ## SysBench ${{ github.ref_name }}
 
-            Binários compilados com Nuitka para as 3 plataformas.
+            Binários **self-contained** — não precisam de Python instalado.
 
-            | Plataforma | Ficheiro |
-            |---|---|
-            | Linux (x86_64) | `sysbench-linux-amd64` |
-            | Windows (x86_64) | `sysbench-windows-amd64.exe` |
-            | macOS (x86_64) | `sysbench-macos-amd64` |
+            | Plataforma | Ficheiro | Requisitos mínimos |
+            |---|---|---|
+            | Linux x86_64 | `sysbench-linux-amd64` | glibc 2.17+ (Ubuntu 16.04+, RHEL 7+, Pop!_OS) |
+            | Windows x86_64 | `sysbench-windows-amd64.exe` | Windows 10+ |
+            | macOS | `sysbench-macos-amd64` | macOS 11+ (Apple Silicon via Rosetta) |
 
-            **Linux / macOS:** `chmod +x sysbench-* && ./sysbench-*`
+            **Linux / macOS:**
+            ```bash
+            chmod +x sysbench-*
+            ./sysbench-linux-amd64
+            ```
             **Windows:** executar directamente o `.exe`
           files: |
             dist/sysbench-linux-amd64
