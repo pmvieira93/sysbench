@@ -73,9 +73,8 @@ jobs:
   # ════════════════════════════════════════════════════════════════════════════
   # WINDOWS — self-contained .exe (Python runtime + MSVC embutidos)
   # Corre em Windows 10+ sem Python instalado.
-  # Optimizações de velocidade:
-  #   - ccache instalado via pip (mais rápido que choco, ~2 min ganhos)
-  #   - cache da compilação C entre runs (após 1º build, ~5 min ganhos)
+  # Nota: ccache não existe como pacote pip no Windows. O cache é feito pela
+  # action Chocobo1/setup-ccache-action que suporta MSVC nativamente.
   # ════════════════════════════════════════════════════════════════════════════
   build-windows:
     runs-on: windows-latest
@@ -87,20 +86,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      # ccache via pip é mais rápido de instalar do que choco (~30s vs ~2min)
       - name: Install Python deps
-        run: pip install psutil rich nuitka ordered-set zstandard ccache
+        run: pip install psutil rich nuitka ordered-set zstandard
 
-      - name: Cache ccache
-        uses: actions/cache@v4
+      # Configura ccache para MSVC — reduz rebuilds de ~14min para ~3min
+      - name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
         with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-windows-${{ hashFiles('benchmark.py') }}
-          restore-keys: ccache-windows-
+          windows_compile_environment: msvc
 
       - name: Build
-        env:
-          CCACHE_DIR: ${{ github.workspace }}/.ccache
         run: |
           python -m nuitka `
             --onefile `
