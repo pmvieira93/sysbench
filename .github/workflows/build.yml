@@ -11,25 +11,30 @@ permissions:
 jobs:
 
   # ════════════════════════════════════════════════════════════════════════════
-  # LINUX — corre dentro de um container manylinux (glibc 2.17, ~2012)
-  # Garante compatibilidade com praticamente qualquer Linux x86_64 moderno:
-  # Ubuntu 16.04+, Debian 9+, RHEL/CentOS 7+, Fedora 26+, Pop!_OS, etc.
-  # O binário resultante não precisa de Python instalado no sistema destino.
+  # LINUX — container manylinux_2_28 (glibc 2.28)
+  #
+  # Porquê manylinux_2_28 e não manylinux2014 (glibc 2.17)?
+  # O GitHub Actions usa Node.js 20 internamente para correr os próprios steps
+  # (checkout, upload-artifact, etc.), e o Node 20 requer glibc >= 2.28.
+  # O manylinux2014 tem apenas glibc 2.17 → Node 20 falha antes do build começar.
+  #
+  # O manylinux_2_28 ainda cobre: Ubuntu 20.04+, Debian 10+, RHEL 8+,
+  # Fedora 29+, Pop!_OS 20.04+ — mais do que suficiente para uso geral.
   # ════════════════════════════════════════════════════════════════════════════
   build-linux:
     runs-on: ubuntu-latest
     container:
-      image: quay.io/pypa/manylinux2014_x86_64   # glibc 2.17
+      image: quay.io/pypa/manylinux_2_28_x86_64   # glibc 2.28
 
     steps:
       - uses: actions/checkout@v4
 
-      # O container já tem Python 3.11 em /opt/python/cp311-cp311/bin/
+      # O container expõe Python 3.11 em /opt/python/cp311-cp311/bin/
       - name: Setup Python path
         run: echo "/opt/python/cp311-cp311/bin" >> $GITHUB_PATH
 
       - name: Install system deps
-        run: yum install -y patchelf ccache
+        run: dnf install -y patchelf ccache
 
       - name: Install Python deps
         run: pip3.11 install psutil rich nuitka ordered-set zstandard
@@ -38,8 +43,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
-          key: ccache-linux-manylinux-${{ hashFiles('benchmark.py') }}
-          restore-keys: ccache-linux-manylinux-
+          key: ccache-linux-${{ hashFiles('benchmark.py') }}
+          restore-keys: ccache-linux-
 
       - name: Build
         run: |
@@ -61,8 +66,8 @@ jobs:
           retention-days: 7
 
   # ════════════════════════════════════════════════════════════════════════════
-  # WINDOWS — o Nuitka embute o Python runtime + MSVC runtime no .exe
-  # Corre em Windows 10+ sem precisar de Python instalado.
+  # WINDOWS — self-contained .exe (Python runtime + MSVC embutidos)
+  # Corre em Windows 10+ sem Python instalado.
   # ════════════════════════════════════════════════════════════════════════════
   build-windows:
     runs-on: windows-latest
@@ -108,11 +113,20 @@ jobs:
           retention-days: 7
 
   # ════════════════════════════════════════════════════════════════════════════
-  # MACOS — compilado para x86_64 (corre em Apple Silicon via Rosetta)
-  # Corre em macOS 11+ sem precisar de Python instalado.
+  # MACOS — compila para a arquitectura nativa do runner
+  #
+  # Porquê sem --macos-target-arch?
+  # O pip instala binários nativos (.so/.dylib) para a arquitectura do runner.
+  # Se o runner é arm64 (Apple Silicon) e forçamos x86_64, o Nuitka falha porque
+  # não consegue linkar um .so arm64 num binário x86_64.
+  # A solução correcta é compilar para a arquitectura nativa e deixar o Rosetta
+  # tratar da compatibilidade Intel se necessário.
+  #
+  # macos-latest = Apple Silicon (arm64) → corre nativamente em M1/M2/M3
+  # macos-13     = Intel x86_64          → corre nativamente em Intel Mac
   # ════════════════════════════════════════════════════════════════════════════
-  build-macos:
-    runs-on: macos-latest
+  build-macos-arm64:
+    runs-on: macos-latest   # arm64 — Apple Silicon nativo
 
     steps:
       - uses: actions/checkout@v4
@@ -131,34 +145,75 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
-          key: ccache-macos-${{ hashFiles('benchmark.py') }}
-          restore-keys: ccache-macos-
+          key: ccache-macos-arm64-${{ hashFiles('benchmark.py') }}
+          restore-keys: ccache-macos-arm64-
 
       - name: Build
         run: |
           python -m nuitka \
             --onefile \
-            --output-filename=sysbench.bin \
+            --output-filename=sysbench-arm64.bin \
             --assume-yes-for-downloads \
             --include-package=rich \
             --include-package-data=rich \
             --include-package=psutil \
             --nofollow-import-to=tkinter \
-            --macos-target-arch=x86_64 \
             benchmark.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sysbench-macos
-          path: sysbench.bin
+          name: sysbench-macos-arm64
+          path: sysbench-arm64.bin
+          retention-days: 7
+
+  build-macos-x86_64:
+    runs-on: macos-13       # Intel x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps
+        run: brew install ccache
+
+      - name: Install Python deps
+        run: pip install psutil rich nuitka ordered-set zstandard
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-macos-x86_64-${{ hashFiles('benchmark.py') }}
+          restore-keys: ccache-macos-x86_64-
+
+      - name: Build
+        run: |
+          python -m nuitka \
+            --onefile \
+            --output-filename=sysbench-x86_64.bin \
+            --assume-yes-for-downloads \
+            --include-package=rich \
+            --include-package-data=rich \
+            --include-package=psutil \
+            --nofollow-import-to=tkinter \
+            benchmark.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysbench-macos-x86_64
+          path: sysbench-x86_64.bin
           retention-days: 7
 
   # ════════════════════════════════════════════════════════════════════════════
-  # RELEASE — agrega os 3 binários e publica no GitHub Releases
+  # RELEASE
   # ════════════════════════════════════════════════════════════════════════════
   release:
-    needs: [build-linux, build-windows, build-macos]
+    needs: [build-linux, build-windows, build-macos-arm64, build-macos-x86_64]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
 
@@ -170,10 +225,11 @@ jobs:
 
       - name: Rename and mark executable
         run: |
-          mv dist/sysbench-linux/sysbench.bin    dist/sysbench-linux-amd64
-          mv dist/sysbench-windows/sysbench.exe  dist/sysbench-windows-amd64.exe
-          mv dist/sysbench-macos/sysbench.bin    dist/sysbench-macos-amd64
-          chmod +x dist/sysbench-linux-amd64 dist/sysbench-macos-amd64
+          mv dist/sysbench-linux/sysbench.bin              dist/sysbench-linux-amd64
+          mv dist/sysbench-windows/sysbench.exe            dist/sysbench-windows-amd64.exe
+          mv dist/sysbench-macos-arm64/sysbench-arm64.bin  dist/sysbench-macos-arm64
+          mv dist/sysbench-macos-x86_64/sysbench-x86_64.bin dist/sysbench-macos-x86_64
+          chmod +x dist/sysbench-linux-amd64 dist/sysbench-macos-arm64 dist/sysbench-macos-x86_64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -184,11 +240,12 @@ jobs:
 
             Binários **self-contained** — não precisam de Python instalado.
 
-            | Plataforma | Ficheiro | Requisitos mínimos |
+            | Plataforma | Ficheiro | Requisitos |
             |---|---|---|
-            | Linux x86_64 | `sysbench-linux-amd64` | glibc 2.17+ (Ubuntu 16.04+, RHEL 7+, Pop!_OS) |
+            | Linux x86_64 | `sysbench-linux-amd64` | glibc 2.28+ (Ubuntu 20.04+, Pop!_OS 20.04+, RHEL 8+) |
             | Windows x86_64 | `sysbench-windows-amd64.exe` | Windows 10+ |
-            | macOS | `sysbench-macos-amd64` | macOS 11+ (Apple Silicon via Rosetta) |
+            | macOS Apple Silicon | `sysbench-macos-arm64` | macOS 11+ M1/M2/M3 |
+            | macOS Intel | `sysbench-macos-x86_64` | macOS 11+ Intel |
 
             **Linux / macOS:**
             ```bash
@@ -199,6 +256,7 @@ jobs:
           files: |
             dist/sysbench-linux-amd64
             dist/sysbench-windows-amd64.exe
-            dist/sysbench-macos-amd64
+            dist/sysbench-macos-arm64
+            dist/sysbench-macos-x86_64
           draft: false
           prerelease: false
